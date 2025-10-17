@@ -2,13 +2,12 @@ import java.io.File;
 import java.util.*;
 
 /**
- * Main class & entry point for Smart Learning Assistant (SLA).
- * Uses arrays (not dynamic collections) to satisfy the "array of objects" requirement.
- *
- * Adjustments for predefined content and fixed CSV directory:
- * - filePath is fixed to "data" relative to program folder.
- * - lessons, assessments and tutors are predefined and users cannot add them via menu.
- * - On first run (no CSV files present) predefined content is created and saved.
+ * Smart Learning Assistant (SLA) main program.
+ * - Loads lessons & assessments from CSV immediately (./data/).
+ * - If CSV missing or incomplete, initializes predefined content (2 modules per subject) and saves to ./data/.
+ * - Assessments: 10 MCQ items, auto-graded, score = correct out of 10.
+ * - Tutors provide predefined, rule-based feedback messages.
+ * - Uses arrays for storage, default package, console UI, and progress bars.
  */
 public class SmartTutoringSystem {
 
@@ -27,71 +26,79 @@ public class SmartTutoringSystem {
     private int lessonCount = 0;
     private int assessmentCount = 0;
 
-    // fixed relative data directory where the program and CSV files live
-    private String filePath = "data";
+    private String filePath = "data"; // fixed relative folder
 
     private final Scanner scanner = new Scanner(System.in);
 
-    // Fixed subjects in the scope
+    // Subjects fixed
     private final List<String> SUBJECTS = Arrays.asList("INTROWEB", "OOP", "DSAL", "ICYBER", "OPSYSFUN");
+
+    // Mapping subject -> number of modules (we ensure 2 each)
+    private final int MODULES_PER_SUBJECT = 2;
 
     public static void main(String[] args) {
         SmartTutoringSystem app = new SmartTutoringSystem();
-        app.loadOrInitData(); // auto-load or initialize predefined content
+        app.loadOrInitData();
         app.mainMenu();
     }
 
-    /**
-     * Attempt to load CSV data. If loading fails or there is no content (tutors/lessons/assessments),
-     * initialize predefined content and save it.
-     */
     private void loadOrInitData() {
         boolean loaded = loadFromCSV();
-        if (!loaded || tutorCount == 0 || lessonCount == 0 || assessmentCount == 0) {
-            System.out.println("No saved data found or incomplete data. Initializing predefined content...");
+        boolean contentOk = (tutorCount >= SUBJECTS.size() && lessonCount >= SUBJECTS.size() * MODULES_PER_SUBJECT && assessmentCount >= SUBJECTS.size());
+        if (!loaded || !contentOk) {
+            System.out.println("No valid saved data found. Initializing predefined content...");
             initPredefinedContent();
             boolean ok = saveToCSV();
-            if (ok) System.out.println("Predefined content created and saved to '" + filePath + "'.");
-            else System.out.println("Failed to automatically save predefined content, but content is available this session.");
+            if (ok) System.out.println("Predefined content saved to ./data/");
+            else System.out.println("Warning: failed to save predefined content automatically.");
         } else {
-            System.out.println("Data loaded from '" + filePath + "'.");
+            System.out.println("Data loaded from ./data/");
         }
     }
 
-    /**
-     * Initialize predefined tutors, lessons and assessments.
-     * These are the fixed contents that the user cannot create via the menu.
-     */
     private void initPredefinedContent() {
-        // clear any existing arrays
-        studentCount = 0; // keep students empty on initial load so teacher/tester can add students
+        // reset arrays
+        studentCount = 0;
         tutorCount = 0;
         lessonCount = 0;
         assessmentCount = 0;
 
-        // Predefined tutors with qualifications and education level
-        addTutor(new TutorTutoring(1001, "Dr. Alice Smith", "alice@example.com", "OOP", "PhD in Computer Science", "Doctorate"));
+        // Predefined tutors (one per subject)
+        addTutor(new TutorTutoring(1001, "Dr. Alice Smith", "alice@example.com", "OOP", "PhD Computer Science", "Doctorate"));
         addTutor(new TutorTutoring(1002, "Mr. Bob Tan", "bob@example.com", "INTROWEB", "MSc Software Engineering", "Masters"));
-        addTutor(new TutorTutoring(1003, "Ms. Carla Reyes", "carla@example.com", "DSAL", "BSc Computer Science, Teaching Certificate", "Bachelors"));
+        addTutor(new TutorTutoring(1003, "Ms. Carla Reyes", "carla@example.com", "DSAL", "BSc Computer Science", "Bachelors"));
         addTutor(new TutorTutoring(1004, "Engr. Danilo Cruz", "danilo@example.com", "ICYBER", "MSc Information Security", "Masters"));
         addTutor(new TutorTutoring(1005, "Prof. Edwin Lim", "edwin@example.com", "OPSYSFUN", "PhD Computer Engineering", "Doctorate"));
 
-        // Predefined lessons (one or more per subject)
-        addLesson(new LessonTutoring(2001, "INTROWEB", "uncompleted", "HTML & CSS Fundamentals"));
-        addLesson(new LessonTutoring(2002, "INTROWEB", "uncompleted", "JavaScript Basics"));
-        addLesson(new LessonTutoring(2101, "OOP", "uncompleted", "Classes and Objects"));
-        addLesson(new LessonTutoring(2102, "OOP", "uncompleted", "Inheritance & Polymorphism"));
-        addLesson(new LessonTutoring(2201, "DSAL", "uncompleted", "Arrays, Lists and Complexity"));
-        addLesson(new LessonTutoring(2202, "DSAL", "uncompleted", "Trees and Graphs Introduction"));
-        addLesson(new LessonTutoring(2301, "ICYBER", "uncompleted", "Security Fundamentals"));
-        addLesson(new LessonTutoring(2401, "OPSYSFUN", "uncompleted", "Operating System Concepts"));
+        // Predefined lessons: 2 per subject with actual content
+        int lessonId = 2001;
+        for (String subj : SUBJECTS) {
+            // Module 1
+            addLesson(new LessonTutoring(lessonId++, subj, "uncompleted", subj + " - Module 1",
+                    "This is the content for " + subj + " Module 1.\nIt covers the basic concepts and examples."));
+            // Module 2
+            addLesson(new LessonTutoring(lessonId++, subj, "uncompleted", subj + " - Module 2",
+                    "This is the content for " + subj + " Module 2.\nIt goes deeper with practice problems."));
+        }
 
-        // Predefined assessments (post-module or generic per subject)
-        addAssessment(new AssessmentTutoring(3001, "INTROWEB", "uncompleted"));
-        addAssessment(new AssessmentTutoring(3002, "OOP", "uncompleted"));
-        addAssessment(new AssessmentTutoring(3003, "DSAL", "uncompleted"));
-        addAssessment(new AssessmentTutoring(3004, "ICYBER", "uncompleted"));
-        addAssessment(new AssessmentTutoring(3005, "OPSYSFUN", "uncompleted"));
+        // Predefined assessments: one per subject, each with 10 MCQs
+        int assessId = 3001;
+        for (String subj : SUBJECTS) {
+            AssessmentTutoring a = new AssessmentTutoring(assessId++, subj, "uncompleted");
+            // fill 10 simple sample questions - replace with richer content if needed
+            for (int i = 0; i < a.getMaxQuestions(); i++) {
+                String q = subj + " Question " + (i + 1) + ": What is the correct choice?";
+                String[] opts = new String[] {
+                        "Option A for " + (i + 1),
+                        "Option B for " + (i + 1),
+                        "Option C for " + (i + 1),
+                        "Option D for " + (i + 1)
+                };
+                int correct = (i % 4) + 1; // rotate correct answers 1..4
+                a.setQuestionAt(i, q, opts, correct);
+            }
+            addAssessment(a);
+        }
     }
 
     // ---- Student operations ----
@@ -106,7 +113,6 @@ public class SmartTutoringSystem {
     public boolean removeStudent(int studentTutorID) {
         for (int i = 0; i < studentCount; i++) {
             if (studentTutored[i].getUserTutoredID() == studentTutorID) {
-                // shift left
                 for (int j = i; j < studentCount - 1; j++) studentTutored[j] = studentTutored[j + 1];
                 studentTutored[studentCount - 1] = null;
                 studentCount--;
@@ -121,13 +127,15 @@ public class SmartTutoringSystem {
             System.out.println("No students registered.");
             return;
         }
+        int totalModules = SUBJECTS.size() * MODULES_PER_SUBJECT;
         for (int i = 0; i < studentCount; i++) {
             System.out.println("----- Student #" + (i + 1) + " -----");
             studentTutored[i].displayInfo();
+            studentTutored[i].displayProgress(totalModules);
         }
     }
 
-    // ---- Tutor operations (predefined, no add via UI) ----
+    // ---- Tutor operations ----
     public void addTutor(TutorTutoring tutor) {
         if (tutorCount >= MAX_TUTORS) {
             System.out.println("Max tutors reached.");
@@ -161,7 +169,7 @@ public class SmartTutoringSystem {
         return null;
     }
 
-    // ---- Lesson operations (predefined, no add via UI) ----
+    // ---- Lesson operations ----
     public void addLesson(LessonTutoring lesson) {
         if (lessonCount >= MAX_LESSONS) {
             System.out.println("Max lessons reached.");
@@ -188,7 +196,7 @@ public class SmartTutoringSystem {
         return null;
     }
 
-    // ---- Assessment operations (predefined, no add via UI) ----
+    // ---- Assessment operations ----
     public void addAssessment(AssessmentTutoring assessment) {
         if (assessmentCount >= MAX_ASSESSMENTS) {
             System.out.println("Max assessments reached.");
@@ -204,8 +212,15 @@ public class SmartTutoringSystem {
         }
         for (int i = 0; i < assessmentCount; i++) {
             assessmentTutoring[i].displaySummary();
-            System.out.println("Last Score (if any): " + (assessmentTutoring[i].getScoreStudent() < 0 ? "N/A" : assessmentTutoring[i].getScoreStudent()));
+            System.out.println("Last Score (if any): " + (assessmentTutoring[i].getLastScore() < 0 ? "N/A" : assessmentTutoring[i].getLastScore() + "/10"));
         }
+    }
+
+    public AssessmentTutoring findAssessmentBySubject(String subject) {
+        for (int i = 0; i < assessmentCount; i++) {
+            if (assessmentTutoring[i].getSubjectContent().equalsIgnoreCase(subject)) return assessmentTutoring[i];
+        }
+        return null;
     }
 
     public AssessmentTutoring findAssessmentById(int id) {
@@ -294,7 +309,7 @@ public class SmartTutoringSystem {
         }
     }
 
-    // ---- Menu UI (content creation removed) ----
+    // ---- Menu UI ----
     private void mainMenu() {
         boolean running = true;
         while (running) {
@@ -414,12 +429,30 @@ public class SmartTutoringSystem {
                         int aid = Integer.parseInt(scanner.nextLine().trim());
                         AssessmentTutoring as = findAssessmentById(aid);
                         if (as == null) { System.out.println("Assessment not found."); break; }
-                        System.out.print("Enter score (0-100): ");
-                        double sc = Double.parseDouble(scanner.nextLine().trim());
-                        as.setScoreStudent(sc);
-                        st.takeAssessment(sc);
-                        System.out.println("Assessment recorded. Result: " + as.evaluatePerformance(sc));
-                        System.out.println("Feedback: " + as.giveFeedback(sc));
+                        int score = as.administerQuiz(scanner);
+                        // update
+                        st.takeAssessment(score);
+                        // tutor feedback: if assigned tutor exists use that tutor's mapped message; else find subject tutor
+                        String tutorMsg = "";
+                        if (st.getAssignedTutorID() != null) {
+                            TutorTutoring t = findTutorById(st.getAssignedTutorID());
+                            if (t != null) tutorMsg = t.provideSupportByScore(score);
+                        } else {
+                            // find tutor by subject (first one with subjectExpertise matching)
+                            TutorTutoring subjTutor = null;
+                            for (int i = 0; i < tutorCount; i++) {
+                                if (tutorTutoring[i].getSubjectExpertise().equalsIgnoreCase(as.getSubjectContent())) {
+                                    subjTutor = tutorTutoring[i];
+                                    break;
+                                }
+                            }
+                            if (subjTutor != null) tutorMsg = subjTutor.provideSupportByScore(score);
+                        }
+                        System.out.println("Assessment recorded. Result: " + as.evaluatePerformance(score));
+                        System.out.println("Feedback: " + as.giveFeedback(score));
+                        if (!tutorMsg.isEmpty()) {
+                            System.out.println("Tutor feedback: " + tutorMsg);
+                        }
                     } catch (Exception e) {
                         System.out.println("Error recording assessment: " + e.getMessage());
                     }
@@ -474,21 +507,56 @@ public class SmartTutoringSystem {
                         LessonTutoring l = findLessonById(lid);
                         if (l == null) { System.out.println("Lesson not found."); break; }
                         l.deliverLesson();
-                        System.out.println("Would you like to take a post-module quiz now? (y/n)");
+                        // allow student to take quiz and track progress
+                        System.out.println("Would you like to take the post-module quiz now? (y/n)");
                         String ans = scanner.nextLine().trim().toLowerCase();
                         if (ans.equals("y")) {
-                            // find a related assessment by subject
-                            AssessmentTutoring found = null;
-                            for (int i = 0; i < assessmentCount; i++) {
-                                if (assessmentTutoring[i].getSubjectContent().equalsIgnoreCase(l.getSubjectContent())) {
-                                    found = assessmentTutoring[i];
-                                    break;
-                                }
-                            }
+                            // find assessment by subject
+                            AssessmentTutoring found = findAssessmentBySubject(l.getSubjectContent());
                             if (found == null) {
-                                System.out.println("No assessment for this module.");
+                                System.out.println("No assessment for this module's subject.");
                             } else {
-                                takeAssessmentFlow(found);
+                                // Ask if the taker is a registered student
+                                System.out.print("Are you a registered student? (y/n): ");
+                                String reg = scanner.nextLine().trim().toLowerCase();
+                                StudentTutored student = null;
+                                if (reg.equals("y")) {
+                                    System.out.print("Enter your student ID: ");
+                                    try {
+                                        int sid = Integer.parseInt(scanner.nextLine().trim());
+                                        student = findStudentById(sid);
+                                        if (student == null) {
+                                            System.out.println("Student not found. Assessment can be taken as guest but progress won't be recorded.");
+                                        }
+                                    } catch (NumberFormatException ex) {
+                                        System.out.println("Invalid ID input; taking as guest.");
+                                    }
+                                }
+                                int score = found.administerQuiz(scanner);
+                                System.out.println("Result: " + found.evaluatePerformance(score));
+                                System.out.println("Feedback: " + found.giveFeedback(score));
+                                // tutor message
+                                String tutorMsg = "";
+                                if (student != null && student.getAssignedTutorID() != null) {
+                                    TutorTutoring t = findTutorById(student.getAssignedTutorID());
+                                    if (t != null) tutorMsg = t.provideSupportByScore(score);
+                                } else {
+                                    TutorTutoring subjTutor = null;
+                                    for (int i = 0; i < tutorCount; i++) {
+                                        if (tutorTutoring[i].getSubjectExpertise().equalsIgnoreCase(found.getSubjectContent())) {
+                                            subjTutor = tutorTutoring[i];
+                                            break;
+                                        }
+                                    }
+                                    if (subjTutor != null) tutorMsg = subjTutor.provideSupportByScore(score);
+                                }
+                                if (!tutorMsg.isEmpty()) System.out.println("Tutor feedback: " + tutorMsg);
+                                // update student if registered
+                                if (student != null) {
+                                    student.takeAssessment(score);
+                                    student.completeModule(); // mark module completed when quiz taken
+                                    System.out.println("Student progress updated.");
+                                }
                             }
                         }
                         l.setStatusContent("completed");
@@ -524,7 +592,38 @@ public class SmartTutoringSystem {
                         int id = Integer.parseInt(scanner.nextLine().trim());
                         AssessmentTutoring a = findAssessmentById(id);
                         if (a == null) { System.out.println("Assessment not found."); break; }
-                        takeAssessmentFlow(a);
+                        System.out.print("Are you a registered student? (y/n): ");
+                        String reg = scanner.nextLine().trim().toLowerCase();
+                        StudentTutored student = null;
+                        if (reg.equals("y")) {
+                            System.out.print("Enter your student ID: ");
+                            int sid = Integer.parseInt(scanner.nextLine().trim());
+                            student = findStudentById(sid);
+                            if (student == null) System.out.println("Student not found. Taking as guest.");
+                        }
+                        int score = a.administerQuiz(scanner);
+                        System.out.println("Result: " + a.evaluatePerformance(score));
+                        System.out.println("Feedback: " + a.giveFeedback(score));
+                        // tutor feedback
+                        String tutorMsg = "";
+                        if (student != null && student.getAssignedTutorID() != null) {
+                            TutorTutoring t = findTutorById(student.getAssignedTutorID());
+                            if (t != null) tutorMsg = t.provideSupportByScore(score);
+                        } else {
+                            TutorTutoring subjTutor = null;
+                            for (int i = 0; i < tutorCount; i++) {
+                                if (tutorTutoring[i].getSubjectExpertise().equalsIgnoreCase(a.getSubjectContent())) {
+                                    subjTutor = tutorTutoring[i];
+                                    break;
+                                }
+                            }
+                            if (subjTutor != null) tutorMsg = subjTutor.provideSupportByScore(score);
+                        }
+                        if (!tutorMsg.isEmpty()) System.out.println("Tutor feedback: " + tutorMsg);
+                        if (student != null) {
+                            student.takeAssessment(score);
+                            System.out.println("Student progress updated.");
+                        }
                     } catch (Exception e) {
                         System.out.println("Error: " + e.getMessage());
                     }
@@ -535,33 +634,6 @@ public class SmartTutoringSystem {
                 default:
                     System.out.println("Invalid.");
             }
-        }
-    }
-
-    private void takeAssessmentFlow(AssessmentTutoring assessment) {
-        try {
-            System.out.print("Are you a registered student? (y/n): ");
-            String isReg = scanner.nextLine().trim().toLowerCase();
-            StudentTutored student = null;
-            if (isReg.equals("y")) {
-                System.out.print("Enter your student ID: ");
-                int sid = Integer.parseInt(scanner.nextLine().trim());
-                student = findStudentById(sid);
-                if (student == null) {
-                    System.out.println("Student not found. You can take assessment as a guest, but no progress will be recorded.");
-                }
-            }
-            System.out.print("Enter score obtained (0-100): ");
-            double score = Double.parseDouble(scanner.nextLine().trim());
-            assessment.setScoreStudent(score);
-            System.out.println("Assessment Result: " + assessment.evaluatePerformance(score));
-            System.out.println("Feedback: " + assessment.giveFeedback(score));
-            if (student != null) {
-                student.takeAssessment(score);
-                System.out.println("Student progress updated.");
-            }
-        } catch (Exception e) {
-            System.out.println("Error during assessment: " + e.getMessage());
         }
     }
 }
