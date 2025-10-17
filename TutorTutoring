@@ -1,0 +1,32 @@
+public class TutorTutoring extends User {
+    private String subjectExpertise;
+    private String educationLevel;
+    private int assignedStudentID = 0;
+
+    public TutorTutoring(int userTutoredID, String nameUser, String emailUser, String subjectExpertise, String educationLevel) { 
+        super(userTutoredID, nameUser, "Tutor", emailUser);
+        this.subjectExpertise = subjectExpertise;
+        this.educationLevel = educationLevel;
+    }
+
+    public void assignStudent(StudentTutored studentAssigned) {
+        if (studentAssigned != null) {
+            assignedStudentID = studentAssigned.userTutoredID;
+            System.out.printf("Tutor %s assigned to Student %s (ID %d)%n",
+                    nameUser, studentAssigned.nameUser, studentAssigned.userTutoredID);
+        }
+    }
+
+    public String provideSupport(StudentTutored student) {
+        if (student == null) return "No student specified.";
+        return String.format("Tutor %s: Hi %s — I recommend reviewing topics where your score is low. Current avg: %.2f",
+                nameUser, student.nameUser, student.scoreOfUser);
+    }
+
+    //Display info
+    @Override
+    public void displayInfo() {
+        super.displayInfo();
+        System.out.print("Subject Expertise: " + subjectExpertise + "\nEducation Level: " + educationLevel);
+    }
+}
