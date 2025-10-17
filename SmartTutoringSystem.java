@@ -4,6 +4,11 @@ import java.util.*;
 /**
  * Main class & entry point for Smart Learning Assistant (SLA).
  * Uses arrays (not dynamic collections) to satisfy the "array of objects" requirement.
+ *
+ * Adjustments for predefined content and fixed CSV directory:
+ * - filePath is fixed to "data" relative to program folder.
+ * - lessons, assessments and tutors are predefined and users cannot add them via menu.
+ * - On first run (no CSV files present) predefined content is created and saved.
  */
 public class SmartTutoringSystem {
 
@@ -22,7 +27,8 @@ public class SmartTutoringSystem {
     private int lessonCount = 0;
     private int assessmentCount = 0;
 
-    private String filePath = "data"; // default directory for CSV files
+    // fixed relative data directory where the program and CSV files live
+    private String filePath = "data";
 
     private final Scanner scanner = new Scanner(System.in);
 
@@ -31,24 +37,61 @@ public class SmartTutoringSystem {
 
     public static void main(String[] args) {
         SmartTutoringSystem app = new SmartTutoringSystem();
-        app.initSampleData(); // optional sample data
+        app.loadOrInitData(); // auto-load or initialize predefined content
         app.mainMenu();
     }
 
-    private void initSampleData() {
-        // create sample tutors if none exist
-        try {
-            addTutor(new TutorTutoring(1001, "Dr. Alice Smith", "alice@example.com", "OOP", "PhD in Computer Science", "Doctorate"));
-            addTutor(new TutorTutoring(1002, "Mr. Bob Tan", "bob@example.com", "INTROWEB", "MSc Software Engineering", "Masters"));
-        } catch (Exception ignored) {}
+    /**
+     * Attempt to load CSV data. If loading fails or there is no content (tutors/lessons/assessments),
+     * initialize predefined content and save it.
+     */
+    private void loadOrInitData() {
+        boolean loaded = loadFromCSV();
+        if (!loaded || tutorCount == 0 || lessonCount == 0 || assessmentCount == 0) {
+            System.out.println("No saved data found or incomplete data. Initializing predefined content...");
+            initPredefinedContent();
+            boolean ok = saveToCSV();
+            if (ok) System.out.println("Predefined content created and saved to '" + filePath + "'.");
+            else System.out.println("Failed to automatically save predefined content, but content is available this session.");
+        } else {
+            System.out.println("Data loaded from '" + filePath + "'.");
+        }
+    }
 
-        // sample lessons
-        addLesson(new LessonTutoring(2001, "OOP", "uncompleted", "Classes and Objects"));
-        addLesson(new LessonTutoring(2002, "INTROWEB", "uncompleted", "HTML & CSS Basics"));
+    /**
+     * Initialize predefined tutors, lessons and assessments.
+     * These are the fixed contents that the user cannot create via the menu.
+     */
+    private void initPredefinedContent() {
+        // clear any existing arrays
+        studentCount = 0; // keep students empty on initial load so teacher/tester can add students
+        tutorCount = 0;
+        lessonCount = 0;
+        assessmentCount = 0;
 
-        // sample assessment
-        addAssessment(new AssessmentTutoring(3001, "OOP", "uncompleted"));
-        addAssessment(new AssessmentTutoring(3002, "INTROWEB", "uncompleted"));
+        // Predefined tutors with qualifications and education level
+        addTutor(new TutorTutoring(1001, "Dr. Alice Smith", "alice@example.com", "OOP", "PhD in Computer Science", "Doctorate"));
+        addTutor(new TutorTutoring(1002, "Mr. Bob Tan", "bob@example.com", "INTROWEB", "MSc Software Engineering", "Masters"));
+        addTutor(new TutorTutoring(1003, "Ms. Carla Reyes", "carla@example.com", "DSAL", "BSc Computer Science, Teaching Certificate", "Bachelors"));
+        addTutor(new TutorTutoring(1004, "Engr. Danilo Cruz", "danilo@example.com", "ICYBER", "MSc Information Security", "Masters"));
+        addTutor(new TutorTutoring(1005, "Prof. Edwin Lim", "edwin@example.com", "OPSYSFUN", "PhD Computer Engineering", "Doctorate"));
+
+        // Predefined lessons (one or more per subject)
+        addLesson(new LessonTutoring(2001, "INTROWEB", "uncompleted", "HTML & CSS Fundamentals"));
+        addLesson(new LessonTutoring(2002, "INTROWEB", "uncompleted", "JavaScript Basics"));
+        addLesson(new LessonTutoring(2101, "OOP", "uncompleted", "Classes and Objects"));
+        addLesson(new LessonTutoring(2102, "OOP", "uncompleted", "Inheritance & Polymorphism"));
+        addLesson(new LessonTutoring(2201, "DSAL", "uncompleted", "Arrays, Lists and Complexity"));
+        addLesson(new LessonTutoring(2202, "DSAL", "uncompleted", "Trees and Graphs Introduction"));
+        addLesson(new LessonTutoring(2301, "ICYBER", "uncompleted", "Security Fundamentals"));
+        addLesson(new LessonTutoring(2401, "OPSYSFUN", "uncompleted", "Operating System Concepts"));
+
+        // Predefined assessments (post-module or generic per subject)
+        addAssessment(new AssessmentTutoring(3001, "INTROWEB", "uncompleted"));
+        addAssessment(new AssessmentTutoring(3002, "OOP", "uncompleted"));
+        addAssessment(new AssessmentTutoring(3003, "DSAL", "uncompleted"));
+        addAssessment(new AssessmentTutoring(3004, "ICYBER", "uncompleted"));
+        addAssessment(new AssessmentTutoring(3005, "OPSYSFUN", "uncompleted"));
     }
 
     // ---- Student operations ----
@@ -84,7 +127,7 @@ public class SmartTutoringSystem {
         }
     }
 
-    // ---- Tutor operations ----
+    // ---- Tutor operations (predefined, no add via UI) ----
     public void addTutor(TutorTutoring tutor) {
         if (tutorCount >= MAX_TUTORS) {
             System.out.println("Max tutors reached.");
@@ -118,7 +161,7 @@ public class SmartTutoringSystem {
         return null;
     }
 
-    // ---- Lesson operations ----
+    // ---- Lesson operations (predefined, no add via UI) ----
     public void addLesson(LessonTutoring lesson) {
         if (lessonCount >= MAX_LESSONS) {
             System.out.println("Max lessons reached.");
@@ -145,7 +188,7 @@ public class SmartTutoringSystem {
         return null;
     }
 
-    // ---- Assessment operations ----
+    // ---- Assessment operations (predefined, no add via UI) ----
     public void addAssessment(AssessmentTutoring assessment) {
         if (assessmentCount >= MAX_ASSESSMENTS) {
             System.out.println("Max assessments reached.");
@@ -172,7 +215,7 @@ public class SmartTutoringSystem {
         return null;
     }
 
-    // ---- Persistence: CSV ----
+    // ---- Persistence: CSV (fixed directory) ----
     public boolean saveToCSV() {
         try {
             File dir = new File(filePath);
@@ -209,7 +252,6 @@ public class SmartTutoringSystem {
         try {
             File dir = new File(filePath);
             if (!dir.exists()) {
-                System.out.println("No data directory found.");
                 return false;
             }
 
@@ -252,18 +294,17 @@ public class SmartTutoringSystem {
         }
     }
 
-    // ---- Menu UI ----
+    // ---- Menu UI (content creation removed) ----
     private void mainMenu() {
         boolean running = true;
         while (running) {
             System.out.println("\n=== Smart Learning Assistant (SLA) ===");
             System.out.println("1. Manage Students");
-            System.out.println("2. Manage Tutors");
-            System.out.println("3. Lessons & Modules");
-            System.out.println("4. Assessments");
+            System.out.println("2. View Tutors (predefined)");
+            System.out.println("3. Lessons & Modules (predefined)");
+            System.out.println("4. Assessments (predefined)");
             System.out.println("5. Save to CSV");
             System.out.println("6. Load from CSV");
-            System.out.println("7. Set data directory (current: " + filePath + ")");
             System.out.println("0. Exit");
             System.out.print("Choose an option: ");
             String choice = scanner.nextLine().trim();
@@ -286,11 +327,6 @@ public class SmartTutoringSystem {
                         break;
                     case "6":
                         System.out.println(loadFromCSV() ? "Loaded successfully." : "Errors while loading.");
-                        break;
-                    case "7":
-                        System.out.print("Enter directory path: ");
-                        String p = scanner.nextLine().trim();
-                        if (!p.isEmpty()) filePath = p;
                         break;
                     case "0":
                         running = false;
@@ -400,34 +436,13 @@ public class SmartTutoringSystem {
     private void tutorsMenu() {
         boolean back = false;
         while (!back) {
-            System.out.println("\n--- Tutors ---");
-            System.out.println("1. Add Tutor");
-            System.out.println("2. List Tutors");
+            System.out.println("\n--- Tutors (predefined) ---");
+            System.out.println("1. List Tutors");
             System.out.println("0. Back");
             System.out.print("Choice: ");
             String c = scanner.nextLine().trim();
             switch (c) {
                 case "1":
-                    try {
-                        System.out.print("ID: ");
-                        int id = Integer.parseInt(scanner.nextLine().trim());
-                        System.out.print("Full Name: ");
-                        String name = scanner.nextLine().trim();
-                        System.out.print("Email: ");
-                        String email = scanner.nextLine().trim();
-                        System.out.println("Subject Expertise (choose from): " + SUBJECTS);
-                        String subj = scanner.nextLine().trim();
-                        System.out.print("Qualifications (e.g., BSc, MSc, PhD): ");
-                        String quals = scanner.nextLine().trim();
-                        System.out.print("Education Level: ");
-                        String edu = scanner.nextLine().trim();
-                        addTutor(new TutorTutoring(id, name, email, subj, quals, edu));
-                        System.out.println("Tutor added.");
-                    } catch (Exception e) {
-                        System.out.println("Error: " + e.getMessage());
-                    }
-                    break;
-                case "2":
                     displayAllTutors();
                     break;
                 case "0":
@@ -442,10 +457,9 @@ public class SmartTutoringSystem {
     private void lessonsMenu() {
         boolean back = false;
         while (!back) {
-            System.out.println("\n--- Lessons ---");
+            System.out.println("\n--- Lessons & Modules (predefined) ---");
             System.out.println("1. List Lessons");
-            System.out.println("2. Add Lesson");
-            System.out.println("3. Open Lesson (deliver + optional quiz)");
+            System.out.println("2. Open Lesson (deliver + optional quiz)");
             System.out.println("0. Back");
             System.out.print("Choice: ");
             String c = scanner.nextLine().trim();
@@ -454,20 +468,6 @@ public class SmartTutoringSystem {
                     displayAllLessons();
                     break;
                 case "2":
-                    try {
-                        System.out.print("Lesson ID: ");
-                        int id = Integer.parseInt(scanner.nextLine().trim());
-                        System.out.println("Choose subject: " + SUBJECTS);
-                        String subj = scanner.nextLine().trim();
-                        System.out.print("Topic: ");
-                        String topic = scanner.nextLine().trim();
-                        addLesson(new LessonTutoring(id, subj, "uncompleted", topic));
-                        System.out.println("Lesson added.");
-                    } catch (Exception e) {
-                        System.out.println("Error: " + e.getMessage());
-                    }
-                    break;
-                case "3":
                     try {
                         System.out.print("Lesson ID to open: ");
                         int lid = Integer.parseInt(scanner.nextLine().trim());
@@ -486,7 +486,7 @@ public class SmartTutoringSystem {
                                 }
                             }
                             if (found == null) {
-                                System.out.println("No assessment for this module. You can create one in Assessments menu.");
+                                System.out.println("No assessment for this module.");
                             } else {
                                 takeAssessmentFlow(found);
                             }
@@ -508,10 +508,9 @@ public class SmartTutoringSystem {
     private void assessmentsMenu() {
         boolean back = false;
         while (!back) {
-            System.out.println("\n--- Assessments ---");
+            System.out.println("\n--- Assessments (predefined) ---");
             System.out.println("1. List Assessments");
-            System.out.println("2. Add Assessment");
-            System.out.println("3. Take Assessment");
+            System.out.println("2. Take Assessment");
             System.out.println("0. Back");
             System.out.print("Choice: ");
             String c = scanner.nextLine().trim();
@@ -520,18 +519,6 @@ public class SmartTutoringSystem {
                     displayAllAssessments();
                     break;
                 case "2":
-                    try {
-                        System.out.print("Assessment ID: ");
-                        int id = Integer.parseInt(scanner.nextLine().trim());
-                        System.out.println("Choose subject: " + SUBJECTS);
-                        String subj = scanner.nextLine().trim();
-                        addAssessment(new AssessmentTutoring(id, subj, "uncompleted"));
-                        System.out.println("Assessment added.");
-                    } catch (Exception e) {
-                        System.out.println("Error: " + e.getMessage());
-                    }
-                    break;
-                case "3":
                     try {
                         System.out.print("Assessment ID: ");
                         int id = Integer.parseInt(scanner.nextLine().trim());
