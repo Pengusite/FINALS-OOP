@@ -3,7 +3,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Small CSV utilities for simple read/write. Note: This is not a fully robust CSV parser.
+ * Small CSV utilities for simple read/write.
+ * Note: This is a simple CSV helper. Content fields are pre-sanitized by replacing commas with semicolons.
  */
 public class CSVUtils {
 
