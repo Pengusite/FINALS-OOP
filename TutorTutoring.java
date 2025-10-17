@@ -46,8 +46,20 @@ public class TutorTutoring extends User {
         System.out.println("Student " + studentAssigned.getNameUser() + " assigned to tutor " + getNameUser());
     }
 
-    public String provideSupport(StudentTutored student) {
-        return "Tutor " + getNameUser() + " suggests: " + student.giveFeedback();
+    /**
+     * Provide predefined rule-based feedback based on numeric score (0..10).
+     * Messages are pre-defined, not typed by the tutor.
+     */
+    public String provideSupportByScore(int scoreOutOf10) {
+        if (scoreOutOf10 >= 9) {
+            return "Excellent performance! Keep going; consider advanced modules.";
+        } else if (scoreOutOf10 >= 7) {
+            return "Good job. Review a few tougher topics to improve further.";
+        } else if (scoreOutOf10 >= 5) {
+            return "Satisfactory. Go back to the lessons and practice more.";
+        } else {
+            return "You need improvement. Please review the module content and contact your tutor for help.";
+        }
     }
 
     @Override
@@ -64,7 +76,7 @@ public class TutorTutoring extends User {
     }
 
     public static TutorTutoring fromCSV(String line) {
-        String[] parts = line.split(",", -1);
+        String[] parts = line.split(",", 6);
         if (parts.length < 6) return null;
         try {
             int id = Integer.parseInt(parts[0].trim());
