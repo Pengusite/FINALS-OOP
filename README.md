@@ -1,5 +1,3 @@
-# Smart Learning Assistant (SLA) - UML Class Diagram
-
 ```mermaid
 classDiagram
   direction TB
@@ -7,15 +5,15 @@ classDiagram
   class SmartTutoringSystem {
     <<utility>>
     +static Scanner scan
-    +static ArrayList~Student~ students
-    +static ArrayList~Tutor~ tutors
+    +static ArrayList~Student~ studentsObj
+    +static ArrayList~Tutor~ tutorsObj
     +static final String admin_u
     +static final String admin_p
     +static Lesson[] lessons
     +static Assessment[] assessments
 
     +static void main(String[] args)
-    +static void loginMenu()
+    +static void loginMainMenu()
     +static void addStudent()
     +static void addTutor()
     +static void adminLogin()
@@ -31,11 +29,17 @@ classDiagram
     +static void studentMenu(Student student)
     +static void viewLessonContent(Student student)
     +static void takeAssessment(Student student)
-    +static void saveData()
-    +static void loadData()
+    +static void saveDataFromCSV()
+    +static void loadDataFromCSV()
     +static Student findStudentByName(String name)
     +static int safeIntInput()
     +static boolean checkBack()
+    +static String encodeString(String)
+    +static String decodeString(String)
+    +static String encodeList(String[])
+    +static String[] decodeList(String)
+    +static String joinBooleans(boolean[])
+    +static boolean[] parseBooleans(String)
   }
 
   class User {
@@ -113,10 +117,10 @@ classDiagram
   Tutor --|> User
 
   %% Aggregations/Compositions and associations
-  SmartTutoringSystem o-- "0..*" Student
-  SmartTutoringSystem o-- "0..*" Tutor
-  SmartTutoringSystem o-- "0..*" Lesson
-  SmartTutoringSystem o-- "0..*" Assessment
+  SmartTutoringSystem o-- "0..*" Student : studentsObj
+  SmartTutoringSystem o-- "0..*" Tutor : tutorsObj
+  SmartTutoringSystem o-- "0..*" Lesson : lessons
+  SmartTutoringSystem o-- "0..*" Assessment : assessments
 
   Student *-- "0..*" StudentAnswer : answersHistory
   Student ..> Lesson : viewedLessons (titles)
